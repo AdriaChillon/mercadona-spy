@@ -28,7 +28,13 @@ class MercadonaService
             }
         }
     }
-
+    public function getLatestPrice($externalId)
+    {
+        $response = Http::get("https://tienda.mercadona.es/api/products/{$externalId}");
+        $productData = $response->json();
+        return $productData['price_instructions']['unit_price'] ?? null;
+    }
+    
     protected function storeProduct($productDetails)
     {
         \App\Models\Product::updateOrCreate(

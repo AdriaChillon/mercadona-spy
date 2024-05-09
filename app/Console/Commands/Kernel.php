@@ -9,12 +9,15 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         \App\Console\Commands\FetchMercadonaProducts::class,
+        \App\Console\Commands\CheckPriceUpdates::class,
     ];    
 
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('update:mercadona')->daily();
+        $schedule->command('price:check')->daily();
     }
+    
 
     protected function commands()
     {
