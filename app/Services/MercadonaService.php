@@ -1,7 +1,10 @@
 <?php
+// app/Services/MercadonaService.php
+
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class MercadonaService
 {
@@ -28,23 +31,35 @@ class MercadonaService
             }
         }
     }
+
     public function getLatestPrice($externalId)
     {
-        $response = Http::get("https://tienda.mercadona.es/api/products/{$externalId}");
-        $productData = $response->json();
-        return $productData['price_instructions']['unit_price'] ?? null;
+        try {
+            $response = Http::get("https://tienda.mercadona.es/api/products/{$externalId}");
+            Log::info("Response for product ID: {$externalId}. Response: " . $response->body());
+            if ($response->successful()) {
+                $productData = $response->json();
+                return $productData['price_instructions']['unit_price'] ?? null;
+            } else {
+                Log::error("Error fetching product data for ID: {$externalId}. Response: " . $response->body());
+                return null;
+            }
+        } catch (\Exception $e) {
+            Log::error("Exception fetching product data for ID: {$externalId}. Error: " . $e->getMessage());
+            return null;
+        }
     }
-    
+
     protected function storeProduct($productDetails)
     {
         \App\Models\Product::updateOrCreate(
-            ['external_id' => $productDetails['id']], // Cambiado de 'id' a 'external_id' para claridad
+            ['external_id' => $productDetails['id']],
             [
                 'name' => $productDetails['display_name'],
-                'price' => $productDetails['price_instructions']['unit_price'],
+                'price' => $productDetails['price_instructions']['unit_price'] ?? 0,
                 'url' => $productDetails['share_url'],
                 'thumbnail' => $productDetails['thumbnail']
             ]
         );
-    }    
+    }
 }
